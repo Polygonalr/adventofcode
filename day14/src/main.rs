@@ -4,7 +4,7 @@ use std::path::Path;
 use core::cmp::{min, max};
 
 const GRID_HEIGHT: usize = 200;
-const GRID_LENGTH: usize = 550;
+const GRID_LENGTH: usize = 800;
 const SAND_SPAWN_POINT: (usize, usize) = (500, 0);
 const ABYSS_Y: usize = 199;
 
@@ -15,8 +15,9 @@ enum Entity {
     NOTHING,
 }
 
-fn build_grid(line_vec: Vec<String>) -> Vec<Vec<Entity>> {
+fn build_grid(line_vec: &Vec<String>, with_floor: bool) -> Vec<Vec<Entity>> {
     let mut grid: Vec<Vec<Entity>> = vec![vec![Entity::NOTHING; GRID_HEIGHT]; GRID_LENGTH];
+    let mut highest_y = 0;
     for line in line_vec {
         let s: Vec<(i32, i32)> = line.split(" -> ").map(|coords| {
             let coords_str_split: Vec<i32> = coords.split(',')
@@ -25,6 +26,7 @@ fn build_grid(line_vec: Vec<String>) -> Vec<Vec<Entity>> {
             (coords_str_split[0], coords_str_split[1])
         }).collect();
         let mut curr_coords = (s[0].0, s[0].1);
+        highest_y = max(highest_y, s[0].1);
         for coords in s.into_iter().skip(1) {
             if curr_coords.0 != coords.0 { // change in x value
                 assert!(curr_coords.1 == coords.1);
@@ -40,8 +42,14 @@ fn build_grid(line_vec: Vec<String>) -> Vec<Vec<Entity>> {
                 for i in from..=to {
                     grid[coords.0 as usize][i as usize] = Entity::ROCK;
                 }
+                highest_y = max(highest_y, coords.1);
             }
             curr_coords = coords;
+        }
+    }
+    if with_floor {
+        for i in 0..GRID_LENGTH {
+            grid[i][highest_y as usize + 2] = Entity::ROCK;
         }
     }
     grid
@@ -78,8 +86,38 @@ fn p1(grid: &mut Vec<Vec<Entity>>) -> i32 {
     }
 }
 
+// First part of the algorithm is exactly the same as part 1,
+// except that we stop when we can no longer drop any sand at (500,0)
 fn p2(grid: &mut Vec<Vec<Entity>>) -> i32 {
-    0
+    let mut sand_count = 0;
+    loop {
+        if grid[SAND_SPAWN_POINT.0][SAND_SPAWN_POINT.1] == Entity::SAND {
+            // cannot spawn any more sand
+            return sand_count;
+        }
+        sand_count += 1;
+        let mut sand_coords: (usize, usize) = SAND_SPAWN_POINT;
+        loop {
+            match grid[sand_coords.0][sand_coords.1 + 1] {
+                Entity::NOTHING => {
+                    sand_coords.1 += 1;
+                }
+                _ => { // something solid
+                    if grid[sand_coords.0 - 1][sand_coords.1 + 1] == Entity::NOTHING { // check left first
+                        sand_coords.0 -= 1;
+                        sand_coords.1 += 1;
+                    } else if grid[sand_coords.0 + 1][sand_coords.1 + 1] == Entity::NOTHING { // then check right
+                        sand_coords.0 += 1;
+                        sand_coords.1 += 1;
+                    } else {
+                        // settle the sand
+                        grid[sand_coords.0][sand_coords.1] = Entity::SAND;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -92,8 +130,8 @@ fn main() {
             line_vec.push(line);
         }
     }
-    let mut grid = build_grid(line_vec);
-    let mut grid2 = grid.to_vec();
+    let mut grid = build_grid(&line_vec, false);
+    let mut grid2 =  build_grid(&line_vec, true);
     println!("Part 1: {}\nPart 2: {}", p1(&mut grid), p2(&mut grid2));
 }
 
