@@ -1,5 +1,13 @@
-# Advent of Code 2021
+# Advent of Code archives
 
-Done in Rust whenever possible. There are definitely a few times where a low level language like C++/Rust is suited for the job, like the compute heavy problems (days [16](./day16) and [19](./day19)).
+Started out with Python, got enlightened by Rust. I am still an imposter Rustacean.
 
-However, [day 13](./day13) is done in Python. Details why so can be found in the directory.
+## Progress
+
+|Year|⭐ (out of 50)|Language of Choice|
+|--|--|--|
+|2019|??|Python/Rust|
+|2020|9|Rust|
+|2021|15|Rust|
+|2022|36|Rust|
+|2023|On-going|Rust|
